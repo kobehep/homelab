@@ -28,7 +28,7 @@ flowchart TB
         AP["Household router<br/>(AP mode)"]
     end
     subgraph VLAN20["VLAN 20 — Lab/Gaming"]
-        subgraph Node1["3070 Micro — Node 1<br/>32GB RAM, i5-9500T/9600T"]
+        subgraph Node1["3070 Micro — Node 1<br/>32GB RAM, i5-9500T"]
             DC01["DC01<br/>Windows Server 2022<br/>AD DS + DNS, lab.local"]
             CLIENT01["CLIENT01<br/>Windows 11<br/>domain-joined"]
             Valheim["Valheim LXC<br/>CubeCoders AMP"]
