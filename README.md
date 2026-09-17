@@ -29,7 +29,7 @@ flowchart TB
     end
     subgraph VLAN20["VLAN 20 — Lab/Gaming"]
         subgraph Cluster["Proxmox VE Cluster"]
-            Micro["3070 Micro — Node 1<br/>32GB RAM, i5-9500T/9600T"]
+            Micro["3070 Micro — Node 1<br/>32GB RAM, i5-9500T"]
             N7040["7040 Micro — Node 2<br/>12→32GB RAM, i5-6500T"]
         end
     end
