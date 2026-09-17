@@ -1,84 +1,85 @@
 # Home Lab
 
-A three-node virtualization and networking lab built from repurposed enterprise desktops, used to develop and demonstrate hands-on sysadmin, virtualization, and networking skills.
+I built and operate this three-node home lab to develop practical, hands-on experience in virtualization, Active Directory administration, network segmentation, and service operations.
 
-**Status:** active / in progress — see [Roadmap](#roadmap).
+**Status:** active, in progress. The virtualization platform, AD lab, and a live game server are all running; network segmentation is designed but not yet cut over — see [Roadmap](#roadmap).
 
-## Overview
-
-- Started August 2026 on three Dell OptiPlex business desktops (SFF, Micro, Micro).
-- Running today:
-  - A 2-node Proxmox VE cluster
-  - An Active Directory lab (Windows Server 2022 domain controller + domain-joined Windows 11 client)
-  - A production-managed Valheim dedicated game server (CubeCoders AMP), serving real external players
-- In progress: segmenting the lab onto its own VLAN behind an OPNsense firewall, moved off the flat household network.
-
-## Architecture
+## Architecture at a glance
 
 ```mermaid
-flowchart TB
-    subgraph WAN["Internet"]
-        Modem["Spectrum Modem"]
-    end
-    subgraph Edge["Network Edge (planned)"]
-        SFF["OptiPlex 3070 SFF<br/>OPNsense Firewall/Router"]
-    end
-    Switch["Managed Switch<br/>802.1Q VLAN trunking"]
-    subgraph VLAN10["VLAN 10 — Trusted"]
-        AP["Household router<br/>(AP mode)"]
-    end
-    subgraph VLAN20["VLAN 20 — Lab/Gaming"]
-        subgraph Node1["3070 Micro — Node 1<br/>32GB RAM, i5-9500T"]
-            DC01["DC01<br/>Windows Server 2022<br/>AD DS + DNS, lab.local"]
-            CLIENT01["CLIENT01<br/>Windows 11<br/>domain-joined"]
-            Valheim["Valheim LXC<br/>CubeCoders AMP"]
-        end
-        subgraph Node2["7040 Micro — Node 2<br/>12→32GB RAM, i5-6500T"]
-            Node2Future["(services pending —<br/>RAM upgrade first)"]
-        end
-    end
+flowchart TD
+    Internet[Internet] --> Edge[OPNsense Firewall/Router<br/>3070 SFF]
+    Edge --> Switch[Managed Switch<br/>802.1Q VLAN trunking]
+    Switch --> AP[Household Router<br/>AP mode — VLAN 10]
+    Switch --> PVE1[Proxmox Node 1 — 3070 Micro<br/>32GB RAM, i5-9500T]
+    Switch --> PVE2[Proxmox Node 2 — 7040 Micro<br/>12→32GB RAM, i5-6500T]
 
-    Modem --> SFF --> Switch
-    Switch --> AP
-    Switch --> Node1
-    Switch --> Node2
+    PVE1 --> DC01[DC01<br/>AD DS / DNS, lab.local]
+    PVE1 --> CLIENT01[CLIENT01<br/>Windows 11, domain-joined]
+    PVE1 --> Valheim[Valheim LXC<br/>CubeCoders AMP]
+    PVE2 --> Future[Services pending —<br/>RAM upgrade first]
+
+    classDef edge fill:#1f6feb,color:#ffffff,stroke:#0d419d;
+    classDef platform fill:#238636,color:#ffffff,stroke:#146c2e;
+    classDef guest fill:#8250df,color:#ffffff,stroke:#6639ba;
+    classDef pending fill:#8c6500,color:#ffffff,stroke:#bf8700;
+    class Edge,Switch,AP edge;
+    class PVE1,PVE2 platform;
+    class DC01,CLIENT01,Valheim guest;
+    class Future pending;
 ```
 
-**Current state note:** the diagram above is the target topology. The OPNsense/VLAN cutover hasn't happened yet — today everything still runs on the flat household network (`vmbr0`) while cabling and a second NIC for the edge box are sourced. The Proxmox cluster, AD lab, and Valheim server are all live now regardless of the network cutover status. Node 2 is cluster-joined but not yet hosting services — see Roadmap.
+This is the target topology — the OPNsense/VLAN cutover hasn't happened yet, so today everything still runs on the flat household network. Full explanation: [network-segmentation.md](docs/network-segmentation.md).
 
-## Hardware
+## What I built
 
-| Role | Hardware | RAM | CPU |
-|---|---|---|---|
-| Network edge (planned OPNsense) | OptiPlex 3070 SFF | — | i5-9500T (6C/6T) |
-| Proxmox node 1 | OptiPlex 3070 Micro | 32GB | i5-9500T (6C/6T) |
-| Proxmox node 2 | OptiPlex 7040 Micro | 12GB → 32GB (upgrade pending) | i5-6500T (4C/4T) |
+- A 2-node Proxmox VE cluster with a documented, deliberate quorum/HA tradeoff (no QDevice, manual placement) rather than an unexamined default
+- An Active Directory lab: a Windows Server 2022 domain controller and a domain-joined Windows 11 client, hitting and fixing a real DNS/IPv6 resolution bug along the way
+- A production-managed Valheim dedicated game server (CubeCoders AMP), open to real external players, migrated from a manual build without losing world data
+- A capacity plan revised after benchmarking actual hardware (CPU, not RAM, turned out to be the real constraint on the older node)
+- A planned VLAN-segmented network behind an OPNsense firewall, scoped around real physical constraints (existing cable runs, AP placement, available NIC slots)
 
-## Services
+## Technical focus
 
-| Service | Host | Purpose | Status |
-|---|---|---|---|
-| Proxmox VE cluster | 3070 Micro + 7040 Micro | Virtualization platform, 2-node, manual failover (no HA) | Live |
-| DC01 — AD DS / DNS | 3070 Micro | Domain controller for `lab.local`, GPO/login testing | Live |
-| CLIENT01 | 3070 Micro | Domain-joined Windows 11 client for AD testing | Live |
-| Valheim (AMP) | 3070 Micro | Dedicated game server, modded, open to external players | Live |
-| OPNsense firewall/router | 3070 SFF | Network edge, VLAN segmentation | Planned |
+| Area | Skills demonstrated |
+|---|---|
+| Virtualization | Proxmox VE clustering, quorum/HA tradeoffs, LXC vs. VM placement decisions, capacity planning against real CPU/RAM constraints |
+| Systems administration | Windows Server 2022 AD DS/DNS, domain join, VirtIO drivers, UEFI/TPM guest requirements, SSH key-only hardening |
+| Networking | VLAN segmentation design, 802.1Q trunking, DNS resolution troubleshooting, IPv6/IPv4 interaction issues |
+| Operations | Service migration without data loss, backup job configuration, third-party script trust evaluation before running as root |
+| Troubleshooting | Diagnosing from live process state and vendor source/config rather than assumptions, recognizing recurring failure patterns across systems |
 
-## Key Engineering Decisions
+## Portfolio guide
 
-- **Skipped HA, kept quorum simple.** A 2-node cluster only has 2 corosync votes, so losing either node freezes cluster-wide management (though running VMs stay up locally). Chose to manage placement manually rather than add a QDevice tie-breaker, since it's a solo lab — documented the tradeoff rather than ignoring it.
-- **Found the real bottleneck was CPU, not RAM.** The older node (7040 Micro) looked RAM-constrained at first, but benchmarking the CPUs (i5-6500T, 4C/4T, no hyperthreading vs. the newer nodes' 6C/6T) showed CPU headroom was the actual long-term limit. Re-planned workload placement around that instead of the RAM upgrade alone.
-- **Built the game server as an LXC container, not a VM**, for lighter resource use — and rejected a low-trust, single-maintainer community install script (1-star repo) in favor of a manual, auditable SteamCMD + systemd build, after specifically checking script provenance before running anything as root.
-- **Migrated to a managed platform (AMP) without losing the world state**, by copying the save files into AMP's instance directory and confirming in the logs that it loaded the existing world rather than silently generating a new one.
+### Design and operations
+
+| Document | What it demonstrates |
+|---|---|
+| [Architecture overview](docs/architecture-overview.md) | End-to-end design and priorities behind the lab |
+| [Virtualization platform](docs/virtualization-platform.md) | Proxmox cluster design, quorum tradeoff, CPU-based capacity replanning |
+| [Active Directory lab](docs/active-directory-lab.md) | DC/client build, AD DS/DNS roles, domain join troubleshooting |
+| [Service platform](docs/service-platform.md) | Valheim/AMP build, script trust evaluation, stateful migration |
+| [Network segmentation](docs/network-segmentation.md) | VLAN/OPNsense design and what's actually blocking the cutover |
+| [Backup and recovery](docs/backup-and-recovery.md) | What's backed up, what's not yet restore-validated, and why that distinction matters |
+
+### Case studies
+
+| Case study | What it demonstrates |
+|---|---|
+| [Proxmox cluster IPv6 masking](case-studies/proxmox-cluster-ipv6-masking.md) | Diagnosing a cluster-join failure down to an IPv6/IPv4 config root cause |
+| [AD domain-join IPv6 masking](case-studies/ad-domain-join-ipv6-masking.md) | Recognizing a recurring failure pattern across two different systems |
+| [AMP AuthServerURL bug](case-studies/amp-authserver-url-bug.md) | Tracing a broken management UI to a bad default config value |
+| [Valheim portal-modifier flag bug](case-studies/valheim-portal-modifier-flag.md) | Verifying a dashboard setting against the live process instead of trusting the UI |
+| [Server Devcommands dual-permissions bug](case-studies/server-devcommands-dual-permissions.md) | Diagnosing two permission systems that needed to agree |
+
+## Technology used
+
+Proxmox VE · Windows Server 2022 (AD DS, DNS) · Windows 11 · OPNsense (planned) · CubeCoders AMP · SteamCMD · systemd · Debian LXC · VirtIO · Git/GitHub
 
 ## Roadmap
 
-- [ ] Complete OPNsense/VLAN network cutover (2 VLANs: trusted household, lab/gaming)
+- [ ] Complete OPNsense/VLAN network cutover
 - [ ] RAM upgrade (7040 Micro, 12GB → 32GB) and SSD storage installs across all three nodes
-- [ ] PowerShell AD automation — scripted user provisioning (CSV → AD user + group + OU, with error handling and logging)
-- [ ] Backup restore validation — actually restore a VM from the existing nightly Proxmox backup job and document the process, not just confirm the job runs
+- [ ] PowerShell AD automation — scripted user provisioning (CSV → AD user/group/OU, with error handling and logging)
+- [ ] Backup restore validation — actually restore a VM from the existing nightly backup and document the process
 - [ ] Lightweight SIEM (Wazuh) — centralize and monitor AD/service logs for authentication anomalies
-
-## Runbooks
-
-Real incidents hit during this build, diagnosed and fixed, written up as case studies: [docs/runbooks.md](docs/runbooks.md).
