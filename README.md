@@ -50,8 +50,8 @@ flowchart TB
 
 | Role | Hardware | RAM | CPU |
 |---|---|---|---|
-| Network edge (planned OPNsense) | OptiPlex 3070 SFF | — | i5-9500T or 9600T (6C/6T) |
-| Proxmox node 1 | OptiPlex 3070 Micro | 32GB | i5-9500T or 9600T (6C/6T) |
+| Network edge (planned OPNsense) | OptiPlex 3070 SFF | — | i5-9500T (6C/6T) |
+| Proxmox node 1 | OptiPlex 3070 Micro | 32GB | i5-9500T (6C/6T) |
 | Proxmox node 2 | OptiPlex 7040 Micro | 12GB → 32GB (upgrade pending) | i5-6500T (4C/4T) |
 
 ## Services
